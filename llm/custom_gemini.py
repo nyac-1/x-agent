@@ -1,90 +1,168 @@
-"""Custom Gemini LLM wrapper with exactly 3 methods."""
+"""Custom Gemini LLM with exactly 3 methods and rate limiting."""
 
-import json
 import time
-from typing import List, Dict, Any
+import json
 import google.generativeai as genai
-from .schemas import TOOL_SELECTION_SCHEMA, FUNCTION_CALL_SCHEMA
+from typing import List, Dict, Any
+from prompts.schemas import FUNCTION_CALL_SCHEMA
 
 
 class CustomGeminiLLM:
-    """Custom Gemini LLM wrapper with exactly 3 operations."""
+    """Custom Gemini LLM wrapper with exactly 3 methods."""
     
-    def __init__(self, api_key: str, model_name: str = "gemini-2.0-flash-exp"):
-        """Initialize the Gemini LLM wrapper."""
+    def __init__(self, api_key: str):
+        """Initialize the Gemini LLM with API key."""
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel(model_name)
-        self.sleep_duration = 1  # 1 second sleep between requests
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
     
-    def _make_request(self, prompt: str) -> str:
-        """Make a request to Gemini with rate limiting."""
-        time.sleep(self.sleep_duration)
+    def text_to_text(self, prompt: str) -> str:
+        """
+        Basic text completion method.
+        
+        Args:
+            prompt: Input text prompt
+            
+        Returns:
+            Generated text response
+        """
         try:
+            # Rate limiting - 1 second between calls
+            time.sleep(1)
+            
             response = self.model.generate_content(prompt)
             return response.text
         except Exception as e:
-            raise Exception(f"Gemini API error: {str(e)}")
-    
-    def text_to_text(self, prompt: str) -> str:
-        """Basic text completion."""
-        return self._make_request(prompt)
+            return f"Error in text_to_text: {str(e)}"
     
     def text_to_json(self, prompt: str, schema: dict) -> dict:
-        """Structured JSON response."""
-        structured_prompt = f"""
+        """
+        Generate structured JSON response.
+        
+        Args:
+            prompt: Input text prompt
+            schema: JSON schema for validation
+            
+        Returns:
+            Structured JSON response
+        """
+        try:
+            # Rate limiting - 1 second between calls
+            time.sleep(1)
+            
+            # Enhanced prompt for JSON generation
+            json_prompt = f"""
 {prompt}
 
-Respond ONLY in valid JSON format matching this exact schema:
+Please respond with valid JSON that matches this schema:
 {json.dumps(schema, indent=2)}
 
-Important: Your response must be valid JSON that can be parsed. Do not include any text before or after the JSON.
+Response (JSON only):
 """
-        response_text = self._make_request(structured_prompt)
-        
-        # Clean up response and parse JSON
-        try:
-            # Remove any potential markdown formatting
-            if response_text.startswith("```json"):
-                response_text = response_text.replace("```json", "").replace("```", "").strip()
-            elif response_text.startswith("```"):
-                response_text = response_text.replace("```", "").strip()
             
-            return json.loads(response_text)
-        except json.JSONDecodeError as e:
-            # Fallback: try to extract JSON from the response
+            response = self.model.generate_content(json_prompt)
+            
+            # Try to parse JSON
             try:
-                start = response_text.find('{')
-                end = response_text.rfind('}') + 1
-                if start != -1 and end != 0:
-                    json_part = response_text[start:end]
-                    return json.loads(json_part)
-            except:
-                pass
-            raise Exception(f"Failed to parse JSON response: {str(e)}\nResponse: {response_text}")
+                return json.loads(response.text)
+            except json.JSONDecodeError:
+                # If JSON parsing fails, return error structure
+                return {
+                    "error": "Failed to parse JSON response",
+                    "raw_response": response.text
+                }
+                
+        except Exception as e:
+            return {
+                "error": f"Error in text_to_json: {str(e)}"
+            }
     
     def text_to_function_call(self, prompt: str, functions: List[dict]) -> dict:
-        """Function calling (Vertex AI style)."""
-        function_prompt = f"""
+        """
+        Generate function call in Vertex AI style.
+        
+        Args:
+            prompt: Input text prompt
+            functions: List of available function definitions
+            
+        Returns:
+            Function call specification
+        """
+        try:
+            # Rate limiting - 1 second between calls
+            time.sleep(1)
+            
+            # Create function calling prompt
+            functions_text = json.dumps(functions, indent=2)
+            function_prompt = f"""
 {prompt}
 
 Available functions:
-{json.dumps(functions, indent=2)}
+{functions_text}
 
-Based on the context and available functions, determine which function to call and with what parameters.
+If you need to call a function, respond with JSON matching this schema:
+{json.dumps(FUNCTION_CALL_SCHEMA, indent=2)}
 
-Respond in JSON format:
-{{
-    "function_name": "name_of_function_to_call",
-    "parameters": {{
-        "param1": "value1",
-        "param2": "value2"
-    }}
-}}
+If no function is needed, respond with:
+{{"function_name": null, "parameters": null}}
 
-If no function call is needed, respond with:
-{{
-    "function_name": null,
-    "parameters": {{}}
-}}
+Response (JSON only):
 """
-        return self.text_to_json(function_prompt, FUNCTION_CALL_SCHEMA) 
+            
+            response = self.model.generate_content(function_prompt)
+            
+            # Try to parse JSON
+            try:
+                result = json.loads(response.text)
+                return result
+            except json.JSONDecodeError:
+                return {
+                    "function_name": None,
+                    "parameters": None,
+                    "error": "Failed to parse function call response",
+                    "raw_response": response.text
+                }
+                
+        except Exception as e:
+            return {
+                "function_name": None,
+                "parameters": None,
+                "error": f"Error in text_to_function_call: {str(e)}"
+            }
+
+
+if __name__ == "__main__":
+    # Test the custom LLM (requires GEMINI_API_KEY environment variable)
+    import os
+    from dotenv import load_dotenv
+    
+    load_dotenv()
+    api_key = os.getenv("GEMINI_API_KEY")
+    
+    if api_key:
+        llm = CustomGeminiLLM(api_key)
+        
+        # Test text_to_text
+        print("Testing text_to_text:")
+        result = llm.text_to_text("What is the capital of France?")
+        print(f"Result: {result}")
+        
+        # Test text_to_json
+        print("\nTesting text_to_json:")
+        schema = {"type": "object", "properties": {"capital": {"type": "string"}}}
+        result = llm.text_to_json("What is the capital of France?", schema)
+        print(f"Result: {result}")
+        
+        # Test text_to_function_call
+        print("\nTesting text_to_function_call:")
+        functions = [{
+            "name": "get_weather",
+            "parameters": {
+                "type": "object",
+                "properties": {"city": {"type": "string"}},
+                "required": ["city"]
+            }
+        }]
+        result = llm.text_to_function_call("What's the weather in Paris?", functions)
+        print(f"Result: {result}")
+    else:
+        print("GEMINI_API_KEY not found") 

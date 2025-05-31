@@ -12,6 +12,7 @@ A question-answer agent built with LangChain framework using a custom Gemini LLM
 - **ReAct Agent Pattern** - Reasoning and acting with tools
 - **Conversation Memory** - Context retention across interactions
 - **Dynamic Tool Selection** - Automatic tool orchestration
+- **Centralized Prompts** - All prompts, schemas, and function definitions in one place
 
 ## Available Tools
 
@@ -50,10 +51,14 @@ agent.get_conversation_history()  # Get history as list
 
 ```
 langchain_gemini_agent/
+├── prompts/
+│   ├── agent_prompts.py      # Agent prompt templates
+│   ├── schemas.py            # JSON response schemas
+│   ├── function_definitions.py # Tool function definitions
+│   └── __init__.py
 ├── llm/
 │   ├── custom_gemini.py      # Custom 3-method Gemini LLM
 │   ├── langchain_adapter.py  # LangChain LLM adapter
-│   ├── schemas.py            # JSON schemas
 │   └── __init__.py
 ├── tools/
 │   ├── web_search.py         # DuckDuckGo search tool
@@ -85,11 +90,6 @@ echo "GEMINI_API_KEY=your_actual_gemini_api_key" > .env
 3. **Run the agent**:
 ```bash
 python main.py
-```
-
-4. **Test memory functionality**:
-```bash
-python test_memory.py
 ```
 
 ## Example Usage
@@ -143,6 +143,19 @@ self.memory = ConversationBufferMemory(
 )
 ```
 
+## Centralized Prompts Architecture
+
+### Prompts Directory Structure
+- **agent_prompts.py** - ReAct agent templates with memory support
+- **schemas.py** - JSON schemas for structured responses
+- **function_definitions.py** - Tool function definitions for LLM
+
+### Benefits of Centralization
+- Single source of truth for all prompts
+- Easy prompt modification and testing
+- Clear separation from business logic
+- Simplified prompt version control
+
 ## Agent Behavior
 
 ### ReAct Pattern with Memory
@@ -190,6 +203,7 @@ self.memory = ConversationBufferMemory(
 - **User Preferences** - Remembers user information
 - **Session Management** - Clean conversation boundaries
 - **Clean Architecture** - Minimal dependencies, clear module boundaries
+- **Centralized Prompts** - All prompts and schemas in one place
 - **Rate Limiting** - Built-in API protection
 - **Safe Execution** - AST-based calculations, no code execution
 
