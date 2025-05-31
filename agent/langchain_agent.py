@@ -7,6 +7,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain_core.messages import HumanMessage, AIMessage
 from llm.langchain_adapter import LangChainGeminiAdapter
 from tools.langchain_tools import LANGCHAIN_TOOLS
+from prompts.agent_prompts import REACT_AGENT_PROMPT
 
 
 class LangChainAgent:
@@ -24,42 +25,8 @@ class LangChainAgent:
             output_key="output"
         )
         
-        # Create agent prompt template with memory
-        self.prompt = PromptTemplate.from_template(
-            """
-You are a helpful assistant that can use tools to answer questions. You have access to our conversation history.
-
-CONVERSATION HISTORY:
-{chat_history}
-
-TOOLS:
-------
-You have access to the following tools:
-
-{tools}
-
-To use a tool, please use the following format:
-
-```
-Thought: Do I need to use a tool? What tool should I use? Consider our conversation history.
-Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action
-Observation: the result of the action
-```
-
-When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
-
-```
-Thought: Do I need to use a tool? No
-Final Answer: [your response here]
-```
-
-Begin!
-
-Current Question: {input}
-Thought: {agent_scratchpad}
-"""
-        )
+        # Use centralized prompt from prompts directory
+        self.prompt = REACT_AGENT_PROMPT
         
         # Create ReAct agent
         self.agent = create_react_agent(
@@ -68,14 +35,15 @@ Thought: {agent_scratchpad}
             prompt=self.prompt
         )
         
-        # Create agent executor with memory
+        # Create agent executor with memory and better error handling
         self.agent_executor = AgentExecutor(
             agent=self.agent,
             tools=LANGCHAIN_TOOLS,
             memory=self.memory,
             verbose=True,
-            handle_parsing_errors=True,
-            max_iterations=3
+            handle_parsing_errors="Check your output and make sure it conforms to the expected format. Only provide ONE action per response, never both Action and Final Answer together.",
+            max_iterations=2,
+            return_intermediate_steps=False
         )
     
     def init_conversation(self) -> None:
