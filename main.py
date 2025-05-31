@@ -35,10 +35,16 @@ def main():
     try:
         agent = LangChainAgent(api_key)
         print("✅ LangChain Agent initialized successfully!")
+        
         print("\n🛠️ Available tools:")
+        print("Custom Tools:")
         print("• 🔍 Web Search (DuckDuckGo)")
         print("• 🧮 Calculator") 
         print("• 📅 Date/Time")
+        print("Native LangChain Tools:")
+        print("• 📖 Wikipedia")
+        print("• 📚 ArXiv (Academic Papers)")
+        print("• 🐍 Python REPL")
         
         print("\n🦜 LangChain Features:")
         print("• 🤖 ReAct agent pattern")
@@ -46,10 +52,14 @@ def main():
         print("• 🧠 Custom 3-method Gemini LLM")
         print("• ⚡ Automatic tool selection")
         print("• 💭 Conversation memory")
+        print("• 🔀 Hybrid tool suite")
         
         print("\n💡 Example queries:")
         print("• 'What is the current Bitcoin price?'")
         print("• 'Calculate 15% of that amount' (refers to previous answer)")
+        print("• 'Find a Wikipedia article about machine learning'")
+        print("• 'Search for papers about transformer models'")
+        print("• 'Write Python code to calculate fibonacci numbers'")
         print("• 'What time is it now?'")
         print("• 'Remember that I like Python programming'")
         

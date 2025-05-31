@@ -13,12 +13,19 @@ A question-answer agent built with LangChain framework using a custom Gemini LLM
 - **Conversation Memory** - Context retention across interactions
 - **Dynamic Tool Selection** - Automatic tool orchestration
 - **Centralized Prompts** - All prompts, schemas, and function definitions in one place
+- **Hybrid Tool Suite** - Custom tools + native LangChain tools
 
 ## Available Tools
 
+### Custom Tools
 - **Web Search** - DuckDuckGo internet search
-- **Calculator** - Mathematical operations
+- **Calculator** - Mathematical operations  
 - **Date/Time** - Current date and time information
+
+### Native LangChain Tools
+- **Wikipedia** - Encyclopedic information lookup
+- **ArXiv** - Academic papers and research search
+- **Python REPL** - Safe Python code execution
 
 ## Conversation Memory
 
@@ -68,8 +75,11 @@ langchain_gemini_agent/
 │   └── __init__.py
 ├── agent/
 │   ├── langchain_agent.py    # LangChain agent with ReAct + Memory
+│   ├── README.md            # Agent architecture deep dive
 │   └── __init__.py
+├── venv/                     # Virtual environment (recommended)
 ├── main.py                   # CLI interface
+├── run_agent.sh             # Venv runner script
 ├── requirements.txt          # Dependencies
 ├── .gitignore               # Git ignore rules
 └── README.md                # This file
@@ -77,7 +87,34 @@ langchain_gemini_agent/
 
 ## Quick Start
 
-1. **Install dependencies**:
+### Option 1: Using Virtual Environment (Recommended)
+
+1. **Create and activate virtual environment**:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+2. **Install dependencies**:
+```bash
+pip install -r requirements.txt
+```
+
+3. **Set your Gemini API key**:
+```bash
+echo "GEMINI_API_KEY=your_actual_gemini_api_key" > .env
+```
+
+4. **Run the agent**:
+```bash
+python main.py
+# OR use the convenience script:
+./run_agent.sh
+```
+
+### Option 2: Global Installation
+
+1. **Install dependencies globally**:
 ```bash
 pip install -r requirements.txt
 ```
@@ -103,13 +140,25 @@ User: "What programming language do I love?"
 Agent: "Based on our conversation, you love Python programming!"
 ```
 
-### Sequential Questions
+### Sequential Questions with Tools
 ```
 User: "What is the current Bitcoin price?"
-Agent: "Bitcoin is currently $43,250"
+Agent: [uses web_search] → "Bitcoin is currently $43,250"
 
 User: "Calculate 15% of that amount"
-Agent: "15% of $43,250 (the Bitcoin price from earlier) is $6,487.50"
+Agent: [uses calculator with context] → "15% of $43,250 is $6,487.50"
+
+User: "Find a Wikipedia article about cryptocurrency"
+Agent: [uses wikipedia] → "Cryptocurrency is a digital currency..."
+```
+
+### Advanced Tool Usage
+```
+User: "Search for recent papers about transformer models"
+Agent: [uses arxiv] → "Found recent papers on transformer architectures..."
+
+User: "Create a Python script to calculate the fibonacci sequence"
+Agent: [uses python_repl] → "def fibonacci(n): ..."
 ```
 
 ## Custom LLM Architecture
@@ -171,6 +220,12 @@ self.memory = ConversationBufferMemory(
 
 ## Technical Details
 
+### Virtual Environment Benefits
+- Isolated dependencies
+- Reproducible setup
+- No conflicts with system packages
+- Easy cleanup and management
+
 ### Memory Implementation
 - LangChain ConversationBufferMemory stores full conversation
 - Human/AI message distinction
@@ -191,10 +246,13 @@ self.memory = ConversationBufferMemory(
 - `langchain>=0.1.0` - Main framework (includes memory)
 - `langchain-core>=0.1.0` - Core LangChain components
 - `langchain-community>=0.0.10` - Community tools
+- `langchain-experimental>=0.0.50` - Experimental tools (Python REPL)
 - `google-generativeai>=0.3.0` - Gemini API
 - `duckduckgo-search>=4.0.0` - Web search
 - `python-dotenv>=1.0.0` - Environment variables
 - `pydantic>=2.0.0` - Data validation
+- `wikipedia>=1.4.0` - Wikipedia API
+- `arxiv>=2.1.0` - ArXiv API
 
 ## Key Benefits
 
@@ -204,14 +262,28 @@ self.memory = ConversationBufferMemory(
 - **Session Management** - Clean conversation boundaries
 - **Clean Architecture** - Minimal dependencies, clear module boundaries
 - **Centralized Prompts** - All prompts and schemas in one place
+- **Hybrid Tools** - Best of custom and native LangChain tools
+- **Virtual Environment** - Isolated, reproducible setup
 - **Rate Limiting** - Built-in API protection
-- **Safe Execution** - AST-based calculations, no code execution
+- **Safe Execution** - AST-based calculations, sandboxed Python execution
 
 ## Use Cases
 
 - **Personal Assistant** - Remembers preferences and context
-- **Research Sessions** - Maintains research context across queries
+- **Research Sessions** - Wikipedia + ArXiv + web search with memory
 - **Learning Sessions** - Builds on previous explanations
-- **Data Analysis** - References previous calculations/searches
+- **Data Analysis** - Python execution + calculations with context
 - **Financial Analysis** - Price lookup with contextual calculations
-- **Educational Tool** - Math problems with conversation context 
+- **Educational Tool** - Math + programming + research with conversation context
+- **Academic Research** - ArXiv search + Wikipedia + Python analysis
+
+## Architecture Deep Dive
+
+For detailed information about the LangChain agent implementation, see [`agent/README.md`](agent/README.md) which covers:
+- ReAct pattern implementation
+- LangChain vs custom agent differences
+- Component breakdown and execution flow
+- Tool architecture and selection logic
+- Memory management strategies
+- Error handling and debugging
+- Extension points and best practices 
