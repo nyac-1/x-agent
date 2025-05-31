@@ -1,25 +1,52 @@
-# 🦜 LangChain Q&A Agent with Custom Gemini LLM
+# LangChain Q&A Agent with Custom Gemini LLM
 
-A clean question-answer agent built with **LangChain framework** using a custom Gemini LLM wrapper that has exactly 3 methods. This implementation uses proper LangChain agent orchestration with ReAct pattern for dynamic tool selection.
+A question-answer agent built with LangChain framework using a custom Gemini LLM wrapper with exactly 3 methods. Features proper LangChain agent orchestration with ReAct pattern and conversation memory management.
 
-## ✨ Features
+## Features
 
-- **🦜 LangChain Framework** - Proper agent orchestration using AgentExecutor
-- **🧠 Custom 3-Method Gemini LLM** with exactly these operations:
+- **LangChain Framework** - Agent orchestration using AgentExecutor
+- **Custom 3-Method Gemini LLM** with constrained interface:
   - `text_to_text()` - Basic text completion
   - `text_to_json()` - Structured JSON responses  
   - `text_to_function_call()` - Function calling capabilities
-- **🤖 ReAct Agent Pattern** - Reasoning and acting with tools
-- **⚡ Dynamic Tool Selection** - Automatic tool orchestration
-- **🔧 LangChain Tools** - Properly integrated tools
+- **ReAct Agent Pattern** - Reasoning and acting with tools
+- **Conversation Memory** - Context retention across interactions
+- **Dynamic Tool Selection** - Automatic tool orchestration
 
-## 🛠️ Tools Available
+## Available Tools
 
-- 🔍 **Web Search** - DuckDuckGo internet search
-- 🧮 **Calculator** - Mathematical operations
-- 📅 **Date/Time** - Current date and time information
+- **Web Search** - DuckDuckGo internet search
+- **Calculator** - Mathematical operations
+- **Date/Time** - Current date and time information
 
-## 🏗️ Clean Project Structure
+## Conversation Memory
+
+### Memory Features
+- Context retention throughout conversation
+- Memory initialization for fresh conversations
+- Memory cleanup when needed
+- Conversation history viewing
+
+### Memory Commands
+```
+help        Show available commands
+history     Display conversation history
+clear       Clear conversation memory
+new         Start new conversation (clears memory)
+quit        End session (auto-clears memory)
+```
+
+### Memory API
+```python
+agent = LangChainAgent(api_key)
+
+agent.init_conversation()         # Initialize new conversation
+agent.end_conversation()          # Clear memory and end
+agent.show_conversation_history() # Display history
+agent.get_conversation_history()  # Get history as list
+```
+
+## Project Structure
 
 ```
 langchain_gemini_agent/
@@ -35,14 +62,15 @@ langchain_gemini_agent/
 │   ├── langchain_tools.py    # LangChain tool wrappers
 │   └── __init__.py
 ├── agent/
-│   ├── langchain_agent.py    # LangChain agent with ReAct
+│   ├── langchain_agent.py    # LangChain agent with ReAct + Memory
 │   └── __init__.py
 ├── main.py                   # CLI interface
 ├── requirements.txt          # Dependencies
-└── README.md                 # This file
+├── .gitignore               # Git ignore rules
+└── README.md                # This file
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 1. **Install dependencies**:
 ```bash
@@ -51,44 +79,42 @@ pip install -r requirements.txt
 
 2. **Set your Gemini API key**:
 ```bash
-# Create a .env file
 echo "GEMINI_API_KEY=your_actual_gemini_api_key" > .env
 ```
 
-3. **Run the LangChain agent**:
+3. **Run the agent**:
 ```bash
 python main.py
 ```
 
-## 💡 Example Interactions
-
-### **Simple Questions**
-```
-❓ User: "What is 2 + 2?"
-🤖 Agent: Uses calculator tool → "Result: 4"
+4. **Test memory functionality**:
+```bash
+python test_memory.py
 ```
 
-### **Web Search**
-```
-❓ User: "What is the current Bitcoin price?"
-🤖 Agent: Uses web search → Current price information
-```
+## Example Usage
 
-### **Complex Multi-Tool**
+### Context Retention
 ```
-❓ User: "Current Bitcoin price and what's 10% of that amount"
-🤖 Agent: 
-  1. Searches for Bitcoin price
-  2. Extracts the price value
-  3. Calculates 10% using calculator
-  4. Provides comprehensive answer
+User: "Remember that my name is Sam and I love Python"
+Agent: "I'll remember that your name is Sam and you love Python programming!"
+
+User: "What programming language do I love?"
+Agent: "Based on our conversation, you love Python programming!"
 ```
 
-## 🧠 Custom LLM Architecture
+### Sequential Questions
+```
+User: "What is the current Bitcoin price?"
+Agent: "Bitcoin is currently $43,250"
 
-### **3-Method Constraint**
-The `CustomGeminiLLM` wrapper implements exactly these methods:
+User: "Calculate 15% of that amount"
+Agent: "15% of $43,250 (the Bitcoin price from earlier) is $6,487.50"
+```
 
+## Custom LLM Architecture
+
+### 3-Method Constraint
 ```python
 class CustomGeminiLLM:
     def text_to_text(self, prompt: str) -> str:
@@ -101,50 +127,55 @@ class CustomGeminiLLM:
         """Function calling in Vertex AI style"""
 ```
 
-### **LangChain Integration**
-The `LangChainGeminiAdapter` wraps the custom LLM to work with LangChain:
-
+### LangChain Integration
 ```python
 class LangChainGeminiAdapter(LLM):
     def _call(self, prompt: str, **kwargs) -> str:
-        """LangChain-compatible interface"""
         return self.custom_llm.text_to_text(prompt)
 ```
 
-## 🤖 Agent Behavior
+### Memory Implementation
+```python
+self.memory = ConversationBufferMemory(
+    memory_key="chat_history",
+    return_messages=True,
+    output_key="output"
+)
+```
 
-### **ReAct Pattern**
-The agent follows the Reasoning-Acting pattern:
+## Agent Behavior
 
-1. **Thought** - Analyze what needs to be done
+### ReAct Pattern with Memory
+1. **Thought** - Analyze what needs to be done considering conversation history
 2. **Action** - Select appropriate tool
 3. **Observation** - Process tool results
-4. **Final Answer** - Provide comprehensive response
+4. **Final Answer** - Provide response using memory context
 
-### **Tool Selection Logic**
-- Automatic tool selection based on question analysis
-- Proper error handling and fallback
-- Context preservation between tool calls
+### Memory-Aware Tool Selection
+- References previous conversations for context
+- Maintains conversation continuity
+- Proper pronoun resolution ("that", "it", "the previous result")
 
-## 🔧 Technical Details
+## Technical Details
 
-### **Rate Limiting**
+### Memory Implementation
+- LangChain ConversationBufferMemory stores full conversation
+- Human/AI message distinction
+- Memory key integrated into prompt template
+- Auto-cleanup on session end
+
+### Rate Limiting
 - 1-second sleep between Gemini API calls
 - Prevents API quota exhaustion
 
-### **Error Handling**
+### Error Handling
 - Graceful tool failure handling
 - Parse error recovery in LangChain
-- User-friendly error messages
+- Memory persistence during errors
 
-### **Tool Integration**
-- LangChain-compatible tool wrappers
-- Proper input validation with Pydantic
-- Structured tool responses
+## Dependencies
 
-## 📋 Dependencies
-
-- `langchain>=0.1.0` - Main framework
+- `langchain>=0.1.0` - Main framework (includes memory)
 - `langchain-core>=0.1.0` - Core LangChain components
 - `langchain-community>=0.0.10` - Community tools
 - `google-generativeai>=0.3.0` - Gemini API
@@ -152,46 +183,21 @@ The agent follows the Reasoning-Acting pattern:
 - `python-dotenv>=1.0.0` - Environment variables
 - `pydantic>=2.0.0` - Data validation
 
-## 🎯 Key Advantages
+## Key Benefits
 
-### **Clean Architecture**
-- ✅ **Minimal Dependencies** - Only essential files
-- ✅ **Separation of Concerns** - Clear module boundaries
-- ✅ **Maintainable Code** - Simple, focused components
-- ✅ **Easy Testing** - Modular design
+- **Context Continuity** - Natural conversation flow
+- **Reference Resolution** - Handles "that", "it", "the previous result"
+- **User Preferences** - Remembers user information
+- **Session Management** - Clean conversation boundaries
+- **Clean Architecture** - Minimal dependencies, clear module boundaries
+- **Rate Limiting** - Built-in API protection
+- **Safe Execution** - AST-based calculations, no code execution
 
-### **LangChain Benefits**
-- ✅ **Proper Agent Orchestration** - Built-in agent patterns
-- ✅ **Tool Management** - Standardized tool interface
-- ✅ **Error Handling** - Robust error recovery
-- ✅ **Extensibility** - Easy to add new tools
+## Use Cases
 
-### **Custom LLM Benefits**
-- ✅ **Rate Limiting** - Built-in API protection
-- ✅ **3-Method Constraint** - Simplified interface
-- ✅ **Structured Outputs** - Reliable JSON responses
-- ✅ **Function Calling** - Tool parameter extraction
-
-## 🔒 Security
-
-- **Safe Calculations** - AST-based expression evaluation
-- **Input Validation** - Pydantic schema validation
-- **API Protection** - Rate limiting and error handling
-- **No Code Execution** - Safe tool implementations
-
-## 🎪 Use Cases
-
-- **Research Assistant** - Web search + calculations
-- **Financial Analysis** - Price lookup + percentage calculations  
-- **General Q&A** - Mixed tool usage based on question type
-- **Educational Tool** - Math problems with current data
-
-## 🧹 Clean Implementation
-
-This project has been thoroughly cleaned to include only:
-- **Essential files** for the LangChain agent
-- **Custom 3-method Gemini LLM** implementation
-- **Core tools** (web search, calculator, datetime)
-- **No legacy code** or unused components
-
-The result is a minimal, maintainable codebase focused on the core functionality. 
+- **Personal Assistant** - Remembers preferences and context
+- **Research Sessions** - Maintains research context across queries
+- **Learning Sessions** - Builds on previous explanations
+- **Data Analysis** - References previous calculations/searches
+- **Financial Analysis** - Price lookup with contextual calculations
+- **Educational Tool** - Math problems with conversation context 
