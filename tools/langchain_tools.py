@@ -4,11 +4,21 @@ from typing import Optional, Type
 from langchain_core.tools import BaseTool
 from langchain_core.callbacks import CallbackManagerForToolRun
 from pydantic import BaseModel, Field
+
+# Import custom tools
 from .web_search import web_search_tool
 from .calculator import calculator_tool  
 from .datetime_tool import datetime_tool
 
+# Import native LangChain tools
+from langchain_community.tools import WikipediaQueryRun
+from langchain_community.utilities import WikipediaAPIWrapper
+from langchain_community.tools import ArxivQueryRun
+from langchain_community.utilities import ArxivAPIWrapper
+from langchain_experimental.tools import PythonREPLTool
 
+
+# Custom tool wrappers (existing)
 class WebSearchInput(BaseModel):
     """Input for web search tool."""
     query: str = Field(description="Search query for web search")
@@ -18,7 +28,7 @@ class WebSearchInput(BaseModel):
 class WebSearchTool(BaseTool):
     """LangChain web search tool."""
     name: str = "web_search"
-    description: str = "Search the internet for current information"
+    description: str = "Search the internet for current information using DuckDuckGo"
     args_schema: Type[BaseModel] = WebSearchInput
 
     def _run(
@@ -90,14 +100,29 @@ class DateTimeTool(BaseTool):
         return f"Current datetime ({format_type}): {result}"
 
 
-# Create tool instances for LangChain
+# Create custom tool instances
 langchain_web_search = WebSearchTool()
 langchain_calculator = CalculatorTool()  
 langchain_datetime = DateTimeTool()
 
-# Export tools list
+# Create native LangChain tool instances
+wikipedia_tool = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
+arxiv_tool = ArxivQueryRun(api_wrapper=ArxivAPIWrapper())
+python_repl_tool = PythonREPLTool()
+
+# Configure tool descriptions for better agent understanding
+wikipedia_tool.description = "Search Wikipedia for encyclopedic information about people, places, concepts, and historical events"
+arxiv_tool.description = "Search arXiv for academic papers and research publications in science, mathematics, computer science, and other fields"
+python_repl_tool.description = "Execute Python code to perform complex calculations, data analysis, or programming tasks. Use for computational problems that require more than basic math."
+
+# Export all tools list
 LANGCHAIN_TOOLS = [
+    # Custom tools
     langchain_web_search,
     langchain_calculator,
-    langchain_datetime
+    langchain_datetime,
+    # Native LangChain tools  
+    wikipedia_tool,
+    arxiv_tool,
+    python_repl_tool
 ] 

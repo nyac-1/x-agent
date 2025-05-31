@@ -3,7 +3,7 @@
 # Web search function definition
 WEB_SEARCH_FUNCTION = {
     "name": "web_search",
-    "description": "Search the internet for current information",
+    "description": "Search the internet for current information using DuckDuckGo",
     "parameters": {
         "type": "object",
         "properties": {
@@ -54,16 +54,74 @@ DATETIME_FUNCTION = {
     }
 }
 
+# Wikipedia function definition (native LangChain tool)
+WIKIPEDIA_FUNCTION = {
+    "name": "wikipedia",
+    "description": "Search Wikipedia for encyclopedic information about people, places, concepts, and historical events",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": "Search query for Wikipedia"
+            }
+        },
+        "required": ["query"]
+    }
+}
+
+# ArXiv function definition (native LangChain tool)
+ARXIV_FUNCTION = {
+    "name": "arxiv",
+    "description": "Search arXiv for academic papers and research publications in science, mathematics, computer science, and other fields",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": "Search query for academic papers"
+            }
+        },
+        "required": ["query"]
+    }
+}
+
+# Python REPL function definition (native LangChain tool)
+PYTHON_REPL_FUNCTION = {
+    "name": "python_repl_ast",
+    "description": "Execute Python code to perform complex calculations, data analysis, or programming tasks. Use for computational problems that require more than basic math.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "command": {
+                "type": "string",
+                "description": "Python code to execute"
+            }
+        },
+        "required": ["command"]
+    }
+}
+
 # Complete list of all available functions
 ALL_FUNCTIONS = [
+    # Custom tools
     WEB_SEARCH_FUNCTION,
     CALCULATOR_FUNCTION,
-    DATETIME_FUNCTION
+    DATETIME_FUNCTION,
+    # Native LangChain tools
+    WIKIPEDIA_FUNCTION,
+    ARXIV_FUNCTION,
+    PYTHON_REPL_FUNCTION
 ]
 
 # Function descriptions for prompt inclusion
 FUNCTION_DESCRIPTIONS = {
+    # Custom tools
     "web_search": "Search the internet for current information using DuckDuckGo",
     "calculator": "Perform mathematical calculations with support for basic operations and parentheses",
-    "get_datetime": "Get current date and time in various formats"
+    "get_datetime": "Get current date and time in various formats",
+    # Native LangChain tools
+    "wikipedia": "Search Wikipedia for encyclopedic information about people, places, concepts, and events",
+    "arxiv": "Search arXiv for academic papers and research publications",
+    "python_repl_ast": "Execute Python code for complex calculations, data analysis, or programming tasks"
 } 
